@@ -4,7 +4,7 @@ function sim_golfderive()
     m1= 0.036; %kg
     m2= 0.0095; %kg
     th1 = -pi/2; %rad
-    th2 = 0; %rad
+    th2 = -pi; %rad
     th1_0 = 0; %rad
     th2_0 = 0; %rad
     dth1 = 0; %rad/s
@@ -21,8 +21,8 @@ function sim_golfderive()
     p   = [m1; I1; c1; l1; m2; I2; c2; l2; g; k; th1_0; th2_0;];       % parameters
 
     %% Perform Dynamic simulation    
-    dt = 0.001;
-    tf = 10;
+    dt = 0.0001;
+    tf = 1;
     num_steps = floor(tf/dt);
     tspan = linspace(0, tf, num_steps); 
     z0 = [th1; th2; dth1; dth2];

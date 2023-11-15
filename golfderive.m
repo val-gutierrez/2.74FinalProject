@@ -1,7 +1,7 @@
 name = 'golf';
 
 % Define variables for time, generalized coordinates + derivatives, controls, and parameters 
-syms t g th1 th2 dth1 dth2 ddth1 ddth2 m1 I1 c1 l1 m2 I2 c2 l2 tau1 tau2 k real
+syms t g th1 th2 dth1 dth2 ddth1 ddth2 m1 I1 c1 l1 m2 I2 c2 l2 tau1 tau2 k th1_0 th2_0 real
 
 % Group them
 q   = [th1; th2];      % generalized coordinates
