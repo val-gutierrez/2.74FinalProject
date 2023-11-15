@@ -36,7 +36,7 @@ T2 = (1/2)*m2*dot(drc2, drc2) + (1/2)*I2*dth2^2;
 
 Vg1 = m1*g*dot(rc1, -jhat);
 Vg2 = m2*g*dot(rc2, -jhat);
-Ve1 = (1/2)*k*(th2-th1)^2;
+Ve1 = (1/2)*k*(th2)^2;
 
 T = simplify(T1 + T2);
 V = simplify(Vg1 + Vg2 + Ve1);

@@ -16,13 +16,13 @@ function sim_golfderive()
     g = -10; %m2/s
     I1 = (1/3)*m1*l1^2; %kgm2
     I2 = (1/3)*m2*l2^2; %kgm2
-    k = 0.0994; %Nm
+    k = 09.94; %Nm
 
     p   = [m1; I1; c1; l1; m2; I2; c2; l2; g; k; th1_0; th2_0;];       % parameters
 
     %% Perform Dynamic simulation    
     dt = 0.0001;
-    tf = 1;
+    tf = 0.5;
     num_steps = floor(tf/dt);
     tspan = linspace(0, tf, num_steps); 
     z0 = [th1; th2; dth1; dth2];
@@ -33,6 +33,13 @@ function sim_golfderive()
         z_out(:,i+1) = z_out(:,i) + dz*dt;
 %         z_out(3:4,i+1) = z_out(3:4,i) + dz(3:4)*dt;
 %         z_out(1:2,i+1) = z_out(1:2,i) + z_out(3:4,i+1)*dt; % + 0.5*dz(3:4)*dt*dt;
+        if z_out(1, i) < 0.01 && z_out(1, i) > -0.01 %stops simulation once th1 =0 (pointing down)
+            t_stop = tspan(i);
+            num_stop = floor(t_stop/dt);
+            vx = dth2*(l1+l2);
+            disp(vx)
+            break
+        end
     end
     final_state = z_out(:,end);
     
@@ -66,7 +73,7 @@ function sim_golfderive()
     skip_frame = 10;
     
     %Step through and update animation
-    for i=1:num_steps
+    for i=1:num_stop
         if mod(i, skip_frame)
             continue
         end
@@ -93,8 +100,8 @@ function sim_golfderive()
 end
 
 function tau = control_law(t, z, p)
-    tau1_des = 1; %[Nm] desired torque to be applied
-    tau1_t = 0.2; %[s] time torque will be applied
+    tau1_des = 3; %[Nm] desired torque to be applied
+    tau1_t = 0.01; %[s] time torque will be applied
 
     if t < tau1_t
         tau = [tau1_des 0]';
