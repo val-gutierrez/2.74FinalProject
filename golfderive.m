@@ -18,7 +18,7 @@ khat = cross(ihat,jhat);
 ddt = @(r) jacobian(r,[q;dq])*[dq;ddq]; % a handy anonymous function for taking time derivatives
 
 rA = l1*sin(th1)*ihat + l1*cos(th1)*(-jhat);
-rB = rA + l2*sin(th2)*ihat + l2*cos(th2)*(-jhat);
+rB = rA + l2*sin(th1+th2)*ihat + l2*cos(th1+th2)*(-jhat);
 rc1 = c1*sin(th1)*ihat + c1*cos(th1)*(-jhat);
 rc2 = rA + c2*sin(th1+th2)*ihat + c2*cos(th1+th2)*(-jhat);
 
@@ -36,7 +36,7 @@ T2 = (1/2)*m2*dot(drc2, drc2) + (1/2)*I2*dth2^2;
 
 Vg1 = m1*g*dot(rc1, -jhat);
 Vg2 = m2*g*dot(rc2, -jhat);
-Ve1 = (1/2)*k*(th2-th2_0)^2;
+Ve1 = (1/2)*k*(th2-th1)^2;
 
 T = simplify(T1 + T2);
 V = simplify(Vg1 + Vg2 + Ve1);

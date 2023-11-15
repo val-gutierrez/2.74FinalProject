@@ -4,7 +4,7 @@ function sim_golfderive()
     m1= 0.036; %kg
     m2= 0.0095; %kg
     th1 = -pi/2; %rad
-    th2 = -pi; %rad
+    th2 = 0; %rad
     th1_0 = 0; %rad
     th2_0 = 0; %rad
     dth1 = 0; %rad/s
@@ -16,7 +16,7 @@ function sim_golfderive()
     g = -10; %m2/s
     I1 = (1/3)*m1*l1^2; %kgm2
     I2 = (1/3)*m2*l2^2; %kgm2
-    k = .0994; %Nm
+    k = 0.00994; %Nm
 
     p   = [m1; I1; c1; l1; m2; I2; c2; l2; g; k; th1_0; th2_0;];       % parameters
 
@@ -92,13 +92,21 @@ function sim_golfderive()
     end
 end
 
+function tau = control_law(t, z, p)
+    
+end
+
 function dz = dynamics(z,p)
     % Get mass matrix
     A = A_golf(z,p);
+
+    % Compute Controls 
+    tau = control_law(t,z,p);
     
     % Get forces
     u = [0 0]';
-    %u = [ 0 -5*z(4)]';
+    
+    
     b = b_golf(z,u, p);
     
     % Solve for qdd
