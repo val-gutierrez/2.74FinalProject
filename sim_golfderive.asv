@@ -22,7 +22,7 @@ function sim_golfderive()
 
     %% Perform Dynamic simulation    
     dt = 0.00001;
-    tf = 0.2;
+    tf = 0.5;
     num_steps = floor(tf/dt);
     tspan = linspace(0, tf, num_steps); 
     z0 = [th1; th2; dth1; dth2];
@@ -33,10 +33,9 @@ function sim_golfderive()
         z_out(:,i+1) = z_out(:,i) + dz*dt;
 %         z_out(3:4,i+1) = z_out(3:4,i) + dz(3:4)*dt;
 %         z_out(1:2,i+1) = z_out(1:2,i) + z_out(3:4,i+1)*dt; % + 0.5*dz(3:4)*dt*dt;
-        theta1 = z_out(1,i);
-        theta2 = z_out(2,i);
-        thresh = .1;
-        if theta1>0 && (theta2<thresh && theta2 >-thresh) %stops simulation once th1 =0 (pointing down)
+        th1 = z_out(1, i);
+        thresh = 0.001;
+        if (th1 > 0) && (th2 > thresh && th2 < -thresh);%stops simulation once th1 =0 (pointing down)
             t_stop = tspan(i);
             num_stop = floor(t_stop/dt);
             vx = dth2*(l1+l2);
@@ -45,42 +44,21 @@ function sim_golfderive()
         end
     end
     final_state = z_out(:,end);
+    
 
-    n = num_stop - 1;
-    
-    
     %% Compute Energy
     E = energy_golf(z_out,p);
     figure(1); clf
-    plot(tspan(1:n),E(1:n));xlabel('Time (s)'); ylabel('Energy (J)');
+    plot(tspan,E);xlabel('Time (s)'); ylabel('Energy (J)');
 
     %% Plot theta1 & theta2
     th1 = th1_golf(z_out, p);
     figure(2); clf
-    plot(tspan(1:n), th1(1:n));xlabel('Time (s)'); ylabel('Theta 1');
+    plot(tspan, th1);xlabel('Time (s)'); ylabel('Theta 1');
 
     th2 = th2_golf(z_out, p);
     figure(3); clf
-    plot(tspan(1:n), th2(1:n));xlabel('Time (s)'); ylabel('Theta 2');
-
-    %% Plot velocities
-
-        %% Calculating velocities using th1 and th2 since functions from derive didn't work
-    dth1 = zeros(1, n-1);
-    dth2 = zeros(1, n-1);
-
-    for i = 1:n-1
-        dth1(i) = (th1(i+1) - th1(i))/dt;
-        dth2(i) = (th2(i+1) - th2(i))/dt;
-    end
-
-        %% Plot
-    figure(5); clf
-    plot(tspan(1:n-1), dth1, 'b-');
-    xlabel("Time (s)"); ylabel("dth1 (Rad/S)");
-    figure(6); clf
-    plot(tspan(1:n-1), dth2, 'k-');
-    xlabel("Time (s)"); ylabel("dth2 (Rad/S)");
+    plot(tspan, th2);xlabel('Time (s)'); ylabel('Theta 2');
 
     %% Animate Solution
     figure(4); clf;
