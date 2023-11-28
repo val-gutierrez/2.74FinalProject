@@ -16,7 +16,7 @@ function sim_golfderive()
     g = -10; %m2/s
     I1 = (1/3)*m1*l1^2; %kgm2
     I2 = (1/3)*m2*l2^2; %kgm2
-    k = .0994; %Nm
+    k = .07; %Nm
 
     p   = [m1; I1; c1; l1; m2; I2; c2; l2; g; k; th1_0; th2_0;];       % parameters
 
@@ -46,7 +46,7 @@ function sim_golfderive()
     end
     final_state = z_out(:,end);
 
-    n = num_stop - 1;
+    n = num_stop;
     
     
     %% Compute Energy
@@ -65,21 +65,14 @@ function sim_golfderive()
 
     %% Plot velocities
 
-        %% Calculating velocities using th1 and th2 since functions from derive didn't work
-    dth1 = zeros(1, n-1);
-    dth2 = zeros(1, n-1);
+    dth1 = z_out(3, 1:num_stop);
+    dth2 = z_out(4, 1:num_stop);
 
-    for i = 1:n-1
-        dth1(i) = (th1(i+1) - th1(i))/dt;
-        dth2(i) = (th2(i+1) - th2(i))/dt;
-    end
-
-        %% Plot
     figure(5); clf
-    plot(tspan(1:n-1), dth1, 'b-');
+    plot(tspan(1:num_stop), dth1, 'b-');
     xlabel("Time (s)"); ylabel("dth1 (Rad/S)");
     figure(6); clf
-    plot(tspan(1:n-1), dth2, 'k-');
+    plot(tspan(1:num_stop), dth2, 'k-');
     xlabel("Time (s)"); ylabel("dth2 (Rad/S)");
 
     %% Animate Solution
@@ -124,7 +117,7 @@ function sim_golfderive()
 end
 
 function tau = control_law(t, z, p)
-    tau1_des = 1.3; %[Nm] desired torque to be applied
+    tau1_des = torque_curve(z(3)); %[Nm] desired torque to be applied
     tau1_t = 0.01; %[s] time torque will be applied
 
     %stall torque - torque constant * speed
@@ -154,4 +147,12 @@ function dz = dynamics(t,z,p)
     % Form dz
     dz(1:2) = z(3:4);
     dz(3:4) = qdd;
+end
+
+function tau_m = torque_curve(dth1_input)
+    % dth1_input should be rad/s.
+    % first convert to rpm
+    rpm = dth1_input * (60)/(2*pi);
+
+    tau_m = 320/2.2 - (1/2.2)*rpm;
 end
