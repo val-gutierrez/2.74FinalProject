@@ -1,30 +1,35 @@
 function sim_golfderive()
-    k_list = 0:.001:.5;
-    max_vel = 0;
-    max_k = 0;
-    vels = {};
-    for k = k_list
-        drB = sim_golfderive_k(.001, false);
-
-        vel_on_impact = sqrt(drB(1)^2 + drB(2)^2 + drB(3)^2);
-
-        vels = [vels, vel_on_impact];
-
-        if (vel_on_impact > max_vel) 
-            max_k = k;
-            max_vel = vel_on_impact;
-        end
-    end
-
-    sim_golfderive_k(max_k, true)
-    vels
-
-    max_vel
-    max_k
+    % k_list = 0:.01:1;
+    % max_vel = 0;
+    % max_k = 0;
+    % vels = [];
+    % mE = 0;
+    % for k = k_list
+    %     drB = sim_golfderive_k(k, mE, false);
+    % 
+    %     vel_on_impact = drB(1);%sqrt(drB(1)^2 + drB(2)^2 + drB(3)^2);
+    % 
+    %     vels = [vels, vel_on_impact];
+    % 
+    %     if (vel_on_impact > max_vel) 
+    %         max_k = k;
+    %         max_vel = vel_on_impact;
+    %     end
+    % end
+    % 
+    % sim_golfderive_k(max_k, mE, true)
+    % vels
+    % 
+    % max_vel
+    % max_k
+    % figure(7); clf
+    % plot(k_list, vels);
+    % xlabel('k value'); ylabel('Impact Velocity');
     
+    sim_golfderive_k(.01, 0, true)
 end
 
-function drB = sim_golfderive_k(k, debug)
+function drB = sim_golfderive_k(k, mE, debug)
 
     %% Definte fixed paramters
     m1= 0.036; %kg
@@ -44,7 +49,7 @@ function drB = sim_golfderive_k(k, debug)
     I2 = (1/3)*m2*l2^2; %kgm2
     %k = .07; %Nm
 
-    p   = [m1; I1; c1; l1; m2; I2; c2; l2; g; k; th1_0; th2_0;];       % parameters
+    p   = [m1; I1; c1; l1; m2; I2; c2; l2; mE; g; k; th1_0; th2_0;];       % parameters
 
     %% Perform Dynamic simulation    
     dt = 0.00001;
@@ -88,7 +93,7 @@ function drB = sim_golfderive_k(k, debug)
             break
         end
     end
-    final_state = z_out(:,end);
+    final_state = z_out(:,num_stop);
 
     n = num_stop;
     
