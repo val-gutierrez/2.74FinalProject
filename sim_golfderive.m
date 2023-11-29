@@ -87,6 +87,7 @@ function drB = sim_golfderive_k(k, debug)
     final_state = z_out(:,end);
 
     n = num_stop;
+    n = num_stop;
     
     if (debug)
         %% Compute Energy
@@ -165,6 +166,7 @@ end
 
 function tau = control_law(t, z, p)
     tau1_des = torque_curve(z(3)); %[Nm] desired torque to be applied
+    tau1_des = torque_curve(z(3)); %[Nm] desired torque to be applied
     tau1_t = 0.01; %[s] time torque will be applied
 
     %stall torque - torque constant * speed
@@ -194,6 +196,14 @@ function dz = dynamics(t,z,p)
     % Form dz
     dz(1:2) = z(3:4);
     dz(3:4) = qdd;
+end
+
+function tau_m = torque_curve(dth1_input)
+    % dth1_input should be rad/s.
+    % first convert to rpm
+    rpm = dth1_input * (60)/(2*pi);
+
+    tau_m = 320/2.2 - (1/2.2)*rpm;
 end
 
 function tau_m = torque_curve(dth1_input)
