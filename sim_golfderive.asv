@@ -8,7 +8,7 @@ function sim_golfderive()
 
         vel_on_impact = sqrt(drB(1)^2 + drB(2)^2 + drB(3)^2);
 
-        vels = [vels, vel_on_impact];
+        vels = ;
 
         if (vel_on_impact > max_vel) 
             max_k = k;
@@ -164,7 +164,7 @@ function drB = sim_golfderive_k(k, debug)
     z_out = z_out(:, 1:num_stop);
 
     %% How do we get back just the velocity of the end-point
-    drB = drB_golf(final_state, p);
+    drB = drB_golf(z_out(:,num_stop), p);
 end
 
 function tau = control_law(t, z, p)
