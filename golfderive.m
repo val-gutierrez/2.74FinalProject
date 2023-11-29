@@ -67,3 +67,4 @@ matlabFunction(E,'file',['energy_' name],'vars',{z p});
 matlabFunction(keypoints,'file',['keypoints_' name],'vars',{z p});
 matlabFunction(th1,'file',['th1_' name],'vars', {z p});
 matlabFunction(th2, 'file', ['th2_' name],'vars', {z p});
+matlabFunction(drB, 'file', ['drB_' name],'vars', {z p});

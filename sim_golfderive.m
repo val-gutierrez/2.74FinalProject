@@ -1,4 +1,26 @@
 function sim_golfderive()
+    k_list = .01:.01:2;
+    max_vel = 0;
+    max_k = 0;
+    for k = k_list
+        drB = sim_golfderive_k(.001, false);
+
+        vel_on_impact = sqrt(drB(1)^2 + drB(2)^2 + drB(3)^2);
+
+        if (vel_on_impact > max_vel) 
+            max_k = k;
+            max_vel = vel_on_impact;
+        end
+    end
+
+    sim_golfderive_k(max_k, true)
+
+    max_vel
+    max_k
+    
+end
+
+function drB = sim_golfderive_k(k, debug)
 
     %% Definte fixed paramters
     m1= 0.036; %kg
@@ -16,7 +38,7 @@ function sim_golfderive()
     g = -10; %m2/s
     I1 = (1/3)*m1*l1^2; %kgm2
     I2 = (1/3)*m2*l2^2; %kgm2
-    k = .0994; %Nm
+    %k = .07; %Nm
 
     p   = [m1; I1; c1; l1; m2; I2; c2; l2; g; k; th1_0; th2_0;];       % parameters
 
@@ -35,96 +57,114 @@ function sim_golfderive()
 %         z_out(1:2,i+1) = z_out(1:2,i) + z_out(3:4,i+1)*dt; % + 0.5*dz(3:4)*dt*dt;
         theta1 = z_out(1,i);
         theta2 = z_out(2,i);
-        thresh = .1;
-        if theta1>0 && (theta2<thresh && theta2 >-thresh) %stops simulation once th1 =0 (pointing down)
+        thresh = .001;
+        %% WANT TO CHANGE THIS SO IT MORE LIKE WHEN IT WOULD HIT THE BALL. ALL GOOD IF IT DOESN"T LINE UP PERFECTLY THAT WILL BE SHOWN IN THE HEAT MAP AS A LOSS.
+        %% How about we do position instead of theta values
+        current_z = z_out(:,i+1);
+        keypoints = keypoints_golf(current_z,p);
+        rC = keypoints(:,2); % Vector to end effector
+        rC_end_x = rC(1);
+        rC_end_y = rC(2);
+
+        % if theta1>0 && (theta2<thresh && theta2 >-thresh) %stops simulation once th1 =0 (pointing down)
+        %     t_stop = tspan(i);
+        %     num_stop = floor(t_stop/dt);
+        %     vx = dth2*(l1+l2);
+        %     disp(vx)
+        %     break
+        % end
+        
+        % If x value is ~0 and y value is ~-(l1+l2)
+        % Seems to work great with just x position
+        if (abs(rC_end_x) < thresh)%%(abs(-(l1+l2) - (rC_end_y)) < thresh)
             t_stop = tspan(i);
             num_stop = floor(t_stop/dt);
             vx = dth2*(l1+l2);
-            disp(vx)
+            disp(vx);
             break
         end
     end
     final_state = z_out(:,end);
 
-    n = num_stop - 1;
+    n = num_stop;
     
+    if (debug)
+        %% Compute Energy
+        E = energy_golf(z_out,p);
+        figure(1); clf
+        plot(tspan(1:n),E(1:n));xlabel('Time (s)'); ylabel('Energy (J)');
     
-    %% Compute Energy
-    E = energy_golf(z_out,p);
-    figure(1); clf
-    plot(tspan(1:n),E(1:n));xlabel('Time (s)'); ylabel('Energy (J)');
-
-    %% Plot theta1 & theta2
-    th1 = th1_golf(z_out, p);
-    figure(2); clf
-    plot(tspan(1:n), th1(1:n));xlabel('Time (s)'); ylabel('Theta 1');
-
-    th2 = th2_golf(z_out, p);
-    figure(3); clf
-    plot(tspan(1:n), th2(1:n));xlabel('Time (s)'); ylabel('Theta 2');
-
-    %% Plot velocities
-
-        %% Calculating velocities using th1 and th2 since functions from derive didn't work
-    dth1 = zeros(1, n-1);
-    dth2 = zeros(1, n-1);
-
-    for i = 1:n-1
-        dth1(i) = (th1(i+1) - th1(i))/dt;
-        dth2(i) = (th2(i+1) - th2(i))/dt;
-    end
-
-        %% Plot
-    figure(5); clf
-    plot(tspan(1:n-1), dth1, 'b-');
-    xlabel("Time (s)"); ylabel("dth1 (Rad/S)");
-    figure(6); clf
-    plot(tspan(1:n-1), dth2, 'k-');
-    xlabel("Time (s)"); ylabel("dth2 (Rad/S)");
-
-    %% Animate Solution
-    figure(4); clf;
-        % Prepare plot handles
-    hold on
-    h_l1 = plot([0],[0],'LineWidth',5);
-    h_l2 = plot([0],[0],'LineWidth',3);
-    xlabel('x')
-    ylabel('y');
-    h_title = title('t=0.0s');
+        %% Plot theta1 & theta2
+        th1 = th1_golf(z_out, p);
+        figure(2); clf
+        plot(tspan(1:n), th1(1:n));xlabel('Time (s)'); ylabel('Theta 1');
     
-    axis equal
-    axis([-0.3 0.3 -0.3 0.3]);
-    skip_frame = 10;
+        th2 = th2_golf(z_out, p);
+        figure(3); clf
+        plot(tspan(1:n), th2(1:n));xlabel('Time (s)'); ylabel('Theta 2');
     
-    %Step through and update animation
-    for i=1:num_stop
-        if mod(i, skip_frame)
-            continue
+        %% Plot velocities
+    
+        dth1 = z_out(3, 1:num_stop);
+        dth2 = z_out(4, 1:num_stop);
+    
+        figure(5); clf
+        plot(tspan(1:num_stop), dth1, 'b-');
+        xlabel("Time (s)"); ylabel("dth1 (Rad/S)");
+        figure(6); clf
+        plot(tspan(1:num_stop), dth2, 'k-');
+        xlabel("Time (s)"); ylabel("dth2 (Rad/S)");
+    
+        %% Animate Solution
+        figure(4); clf;
+            % Prepare plot handles
+        hold on
+        h_l1 = plot([0],[0],'LineWidth',5);
+        h_l2 = plot([0],[0],'LineWidth',3);
+        xlabel('x')
+        ylabel('y');
+        h_title = title('t=0.0s');
+    
+        axis equal
+        axis([-0.3 0.3 -0.3 0.3]);
+        skip_frame = 10;
+    
+        %Step through and update animation
+        for i=1:num_stop
+            if mod(i, skip_frame)
+                continue
+            end
+            % interpolate to get state at current time.
+            t = tspan(i);
+            z = z_out(:,i);
+            keypoints = keypoints_golf(z,p);
+    
+            rB = keypoints(:,1); % Vector to joint 
+            rC = keypoints(:,2); % Vector to end effector
+    
+            set(h_title,'String',  sprintf('t=%.2f',t) ); % update title
+    
+            % Plot link 1
+            set(h_l1,'XData', [0 ; rB(1)]);
+            set(h_l1,'YData', [0 ; rB(2)]);
+    
+            % Plot link 2
+            set(h_l2,'XData' , [rB(1) ; rC(1)] );
+            set(h_l2,'YData' , [rB(2) ; rC(2)] );
+    
+            pause(.01)
         end
-        % interpolate to get state at current time.
-        t = tspan(i);
-        z = z_out(:,i);
-        keypoints = keypoints_golf(z,p);
 
-        rB = keypoints(:,1); % Vector to joint 
-        rC = keypoints(:,2); % Vector to end effector
-
-        set(h_title,'String',  sprintf('t=%.2f',t) ); % update title
-        
-        % Plot link 1
-        set(h_l1,'XData', [0 ; rB(1)]);
-        set(h_l1,'YData', [0 ; rB(2)]);
-
-        % Plot link 2
-        set(h_l2,'XData' , [rB(1) ; rC(1)] );
-        set(h_l2,'YData' , [rB(2) ; rC(2)] );
-
-        pause(.01)
     end
+    
+    z_out = z_out(:, 1:num_stop);
+
+    %% How do we get back just the velocity of the end-point
+    drB = drB_golf(z_out(:,num_stop), p);
 end
 
 function tau = control_law(t, z, p)
-    tau1_des = 1.3; %[Nm] desired torque to be applied
+    tau1_des = torque_curve(z(3)); %[Nm] desired torque to be applied
     tau1_t = 0.01; %[s] time torque will be applied
 
     %stall torque - torque constant * speed
@@ -154,4 +194,12 @@ function dz = dynamics(t,z,p)
     % Form dz
     dz(1:2) = z(3:4);
     dz(3:4) = qdd;
+end
+
+function tau_m = torque_curve(dth1_input)
+    % dth1_input should be rad/s.
+    % first convert to rpm
+    rpm = dth1_input * (60)/(2*pi);
+
+    tau_m = 320/2.2 - (1/2.2)*rpm;
 end
