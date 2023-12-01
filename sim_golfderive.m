@@ -1,43 +1,36 @@
 function sim_golfderive()
-    % k_list = 0:.001:.5;
-    % tau1_t_list = .1;
-    % max_vel = 0;
-    % max_k = 0;
-    % vels = [];
-    % mE = 0;
-    % for k = k_list
-    %     drB = sim_golfderive_k(k, mE, false);
-    % 
-    %     vel_on_impact = drB(1);%sqrt(drB(1)^2 + drB(2)^2 + drB(3)^2);
-    % 
-    %     vels = [vels, vel_on_impact];
-    % 
-    %     if (vel_on_impact > max_vel) 
-    %         max_k = k;
-    %         max_vel = vel_on_impact;
-    %     end
-    % end
-    % 
-    % sim_golfderive_k(max_k, mE, true)
-    % vels
-    % 
-    % max_vel
-    % max_k
-    % figure(7); clf
-    % plot(k_list, vels);
-    % xlabel('k value'); ylabel('Impact Velocity');
+    %% Notes to future manny
+    % The simulation seems to be working well stopping when it should I
+    % however question if maybe there are values that produce the same
+    % momentum result but we should differentiate against. Lets say a
+    % simulation has the same value when it runs the motor full time and
+    % when it runs the motor less time. We should prefer the one that runs
+    % it less. kinda something like that. I think I intuitevly was assuming
+    % the best answer should follow our hypothesis but maybe we need to
+    % change some constraints or something you know.
+  
+    % I also think it would be helpful to show a torque curve along with
+    % all our other graphs to show the torque curve is working correctly
+    % and see if it might be affecting energy weirdly. Cause right now it's
+    % just always choosing to swing the motor for the longest duration. And
+    % I am not seeing any large noticable differences with swing and time
+    % of swing you know. Maybe a graph with tau1_t as one of the axis would
+    % be helpful in seeing if it changes at all between runs.
+
+    % Lastly need to also make a heat map. Sample code is below for that
+    % but haven't run it.
 
 
     %%% NEW CODE AS OF 11/30/23 ----------------------
 
     % Resonably can do 0 - 1.5
-    k_list = 0:.005:.5;
+    k_list = 0.04:.001:.075;
     % Resonably can do 0 - .1
-    mE_list = 0:.01:.1;
+    mE_list = 4:.05:7;
     % Resonably can do 0 - .2
     tau1_t_list = .2:-.01:0; 
 
-    max_vel = 0;
+    max_val = 0;
     opt_k = 0;
     opt_mE = 0;
     opt_tau1_t = 0;
@@ -74,15 +67,24 @@ function sim_golfderive()
             % matrix
             i = find(k_list == k);
             j = find(mE_list == mE);
-            heat_map_values(i, j) = max_tau_vel;
+            % Made it more accurate for heat map and surface plot by
+            % changing -1 to NaN
+            if (max_tau_vel == -1)
+                heat_map_values(i,j) = NaN;
+            else
+                % Now storing momentum and not just velocity
+                mom_val = (mE+0.0095)*(max_tau_vel)^2;
+                heat_map_values(i, j) = mom_val;
 
-            % Checking for best optimization for all
-            if(max_tau_vel > max_vel)
-                max_vel = max_tau_vel;
-                opt_k = k;
-                opt_mE = mE;
-                opt_tau1_t = max_tau;
+                % Checking for best optimization for all
+                if(mom_val > max_val)
+                    max_val = mom_val;
+                    opt_k = k;
+                    opt_mE = mE;
+                    opt_tau1_t = max_tau;
+                end
             end
+                        
         end
     end
 
@@ -96,8 +98,16 @@ function sim_golfderive()
     zlabel('Vel');
     title('3D Surface Plot of Impact Velocity');
 
-    % 2 print best values
-    max_vel
+    % 2 Heatmap Plot
+    % figure; % !!!make sure to use different number for figure
+    % imagesc(k_list, mE_list, vel_vals'); % !!!change vel_vals cause thats diff
+    % colorbar;
+    % xlabel('k');
+    % ylabel('mE');
+    % title('Heatmap of Velocity');
+
+    % 3 print best values
+    max_val
     opt_k
     opt_mE
     opt_tau1_t
@@ -141,7 +151,7 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
 %         z_out(1:2,i+1) = z_out(1:2,i) + z_out(3:4,i+1)*dt; % + 0.5*dz(3:4)*dt*dt;
         theta1 = z_out(1,i);
         theta2 = z_out(2,i);
-        thresh = .001;
+        thresh = .2;
         %% WANT TO CHANGE THIS SO IT MORE LIKE WHEN IT WOULD HIT THE BALL. ALL GOOD IF IT DOESN"T LINE UP PERFECTLY THAT WILL BE SHOWN IN THE HEAT MAP AS A LOSS.
         %% How about we do position instead of theta values
         current_z = z_out(:,i+1);
@@ -159,7 +169,9 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
         % end
         
         % If x value is ~0 and theta value is ~0 Stop
-        if (abs(rC_end_x) < thresh) && (abs(theta1) < thresh)
+        % maybe add some coefficeint to change one of these constraints.
+        % Not reall sure which right now
+        if (abs(rC_end_x) < 2*thresh) && (abs(theta1) < thresh)
             t_stop = tspan(i);
             num_stop = floor(t_stop/dt);
             vx = dth2*(l1+l2);
