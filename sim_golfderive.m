@@ -1,5 +1,6 @@
 function sim_golfderive()
-    % k_list = 0:.01:1;
+    % k_list = 0:.001:.5;
+    % tau1_t_list = .1;
     % max_vel = 0;
     % max_k = 0;
     % vels = [];
@@ -25,11 +26,84 @@ function sim_golfderive()
     % figure(7); clf
     % plot(k_list, vels);
     % xlabel('k value'); ylabel('Impact Velocity');
-    
-    sim_golfderive_k(.01, 0, true)
+
+
+    %%% NEW CODE AS OF 11/30/23 ----------------------
+
+    % Resonably can do 0 - 1.5
+    k_list = 0:.005:.5;
+    % Resonably can do 0 - .1
+    mE_list = 0:.01:.1;
+    % Resonably can do 0 - .2
+    tau1_t_list = .2:-.01:0; 
+
+    max_vel = 0;
+    opt_k = 0;
+    opt_mE = 0;
+    opt_tau1_t = 0;
+
+    heat_map_values = zeros(length(k_list), length(mE_list));
+
+    debug = false;
+
+    for k = k_list
+        for mE = mE_list
+            % best veloctiy and tau_t value in range for K and mE
+            max_tau_vel = 0;
+            max_tau = 0;
+            % Need to run for several tau_1's and get the best value.
+            % Discard ones that don't work
+            for tau1_t = tau1_t_list
+                drB = sim_golfderive_k(k, mE, tau1_t, debug);
+                
+                % If drB(1) is -1 or the conditions weren't met with tau1_t
+                % to get valid results then ignore that point and move on
+                % to the next
+                if(drB(1) == -1)
+                    % Ignore data
+                else
+                    % data is good, now check if best
+                    if (drB(1) > max_tau_vel)
+                        max_tau_vel = drB(1);
+                        max_tau = tau1_t;
+                    end
+                end
+            end
+
+            % Done running tau1_t list now get best value and store in
+            % matrix
+            i = find(k_list == k);
+            j = find(mE_list == mE);
+            heat_map_values(i, j) = max_tau_vel;
+
+            % Checking for best optimization for all
+            if(max_tau_vel > max_vel)
+                max_vel = max_tau_vel;
+                opt_k = k;
+                opt_mE = mE;
+                opt_tau1_t = max_tau;
+            end
+        end
+    end
+
+    %% Once all data points are gotten
+
+    % 1 lets plot our heat map
+    figure(7); clf
+    surf(k_list, mE_list, heat_map_values');
+    xlabel('k');
+    ylabel('mE');
+    zlabel('Vel');
+    title('3D Surface Plot of Impact Velocity');
+
+    % 2 print best values
+    max_vel
+    opt_k
+    opt_mE
+    opt_tau1_t
 end
 
-function drB = sim_golfderive_k(k, mE, debug)
+function drB = sim_golfderive_k(k, mE, tau1_t, debug)
 
     %% Definte fixed paramters
     m1= 0.036; %kg
@@ -51,16 +125,17 @@ function drB = sim_golfderive_k(k, mE, debug)
 
     p   = [m1; I1; c1; l1; m2; I2; c2; l2; mE; g; k; th1_0; th2_0;];       % parameters
 
-    %% Perform Dynamic simulation    
+    %% Perform Dynamic simulation  
+    num_stop = -1;
     dt = 0.00001;
-    tf = 0.2;
+    tf = 0.3;
     num_steps = floor(tf/dt);
     tspan = linspace(0, tf, num_steps); 
     z0 = [th1; th2; dth1; dth2];
     z_out = zeros(4,num_steps);
     z_out(:,1) = z0;
     for i=1:num_steps-1
-        dz = dynamics(tspan(i), z_out(:,i), p);
+        dz = dynamics(tspan(i), z_out(:,i), p, tau1_t);
         z_out(:,i+1) = z_out(:,i) + dz*dt;
 %         z_out(3:4,i+1) = z_out(3:4,i) + dz(3:4)*dt;
 %         z_out(1:2,i+1) = z_out(1:2,i) + z_out(3:4,i+1)*dt; % + 0.5*dz(3:4)*dt*dt;
@@ -83,9 +158,8 @@ function drB = sim_golfderive_k(k, mE, debug)
         %     break
         % end
         
-        % If x value is ~0 and y value is ~-(l1+l2)
-        % Seems to work great with just x position
-        if (abs(rC_end_x) < thresh)%%(abs(-(l1+l2) - (rC_end_y)) < thresh)
+        % If x value is ~0 and theta value is ~0 Stop
+        if (abs(rC_end_x) < thresh) && (abs(theta1) < thresh)
             t_stop = tspan(i);
             num_stop = floor(t_stop/dt);
             vx = dth2*(l1+l2);
@@ -93,9 +167,20 @@ function drB = sim_golfderive_k(k, mE, debug)
             break
         end
     end
-    final_state = z_out(:,num_stop);
+    
+    if (num_stop == -1)
+        %% Discard data for that run
+        drB = -1;
+        n = num_steps;
+    else
+        %% Collect data
+        final_state = z_out(:,num_stop);
+        
+        % if final velocity is greater than last recorded update
+        drB = drB_golf(final_state, p);
 
-    n = num_stop;
+        n = num_stop;
+    end
     
     if (debug)
         %% Compute Energy
@@ -165,17 +250,12 @@ function drB = sim_golfderive_k(k, mE, debug)
         end
 
     end
-    
-    z_out = z_out(:, 1:num_stop);
-
-    %% How do we get back just the velocity of the end-point
-    drB = drB_golf(final_state, p);
 end
 
-function tau = control_law(t, z, p)
+function tau = control_law(t, z, tau1_t)
     tau1_des = torque_curve(z(3)); %[Nm] desired torque to be applied
-    tau1_des = torque_curve(z(3)); %[Nm] desired torque to be applied
-    tau1_t = 0.01; %[s] time torque will be applied
+    % tau1_des = torque_curve(z(3)); %[Nm] desired torque to be applied
+    % tau1_t = 0.01; %[s] time torque will be applied
 
     %stall torque - torque constant * speed
 
@@ -187,12 +267,12 @@ function tau = control_law(t, z, p)
     
 end
 
-function dz = dynamics(t,z,p)
+function dz = dynamics(t,z,p,tau1_t)
     % Get mass matrix
     A = A_golf(z,p);
 
     % Compute Controls 
-    tau = control_law(t,z,p);
+    tau = control_law(t,z,tau1_t);
     
     % Get b = Q - V(q,qd) - G(q)
     b = b_golf(z,tau,p);
@@ -209,7 +289,7 @@ end
 function tau_m = torque_curve(dth1_input)
     % dth1_input should be rad/s.
     % first convert to rpm
-    rpm = dth1_input * (60)/(2*pi);
+    %rpm = dth1_input * (60)/(2*pi);
 
-    tau_m = 320/2.2 - (1/2.2)*rpm;
+    tau_m = ((85/1000)*(1/9.8)) - ((85/1000)*(1/9.8))/(504/(2*pi)*60)*dth1_input;
 end

@@ -33,17 +33,17 @@ M2Q = @(M,w) simplify(jacobian(w,dq)'*(M));   % moment contributions to generali
 
 T1 = (1/2)*m1*dot(drc1, drc1) + (1/2)*I1*dth1^2;
 T2 = (1/2)*m2*dot(drc2, drc2) + (1/2)*I2*(dth1+dth2)^2;
-TE = (1/2)*mE*dot(drc2, drc2) + (1/2)*(mE*l2^2)*(dth1+dth2)^2;
+TE = (1/2)*mE*dot(drB, drB);
 
 Vg1 = m1*g*dot(rc1, -jhat);
 Vg2 = m2*g*dot(rc2, -jhat);
 Ve1 = (1/2)*k*(th2)^2;
-VE = mE*g*dot(rc2, -jhat);
+VE = mE*g*dot(rB, -jhat);
 
 T = simplify(T1 + T2 + TE);
 V = simplify(Vg1 + Vg2 + Ve1 + VE);
 
-Q1 = M2Q(tau1*khat, *khat);
+Q1 = M2Q(tau1*khat, dth1*khat);
 Q2 = M2Q(tau2*khat, dth2*khat);
 Q = Q1+Q2;
 
@@ -55,7 +55,6 @@ keypoints = [rA(1:2) rB(1:2) rc1(1:2) rc2(1:2)];
 E = T+V;
 L = T-V;
 g = ddt(jacobian(L,dq).') - jacobian(L,q).' - Q;
-
 
 % Rearrange Equations of Motion
 A = jacobian(g,ddq);
