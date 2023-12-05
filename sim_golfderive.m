@@ -9,13 +9,13 @@ function sim_golfderive()
     %%% NEW CODE AS OF 11/30/23 ----------------------
 
     % Screen record pause
-    pause(15);
+    %pause(15);
     % Resonably can do 0 - 1.5
     k_list = .09;
     % Resonably can do 0 - .1
-    mE_list = 1000; %0:.001:.05;
+    mE_list = 1000000; %0:.001:.05;
     % Resonably can do 0 - .2
-    tau1_t_list = 5;
+    tau1_t_list = 50;
 
     max_val = 0;
     opt_k = 0;
@@ -25,7 +25,7 @@ function sim_golfderive()
     heat_map_values = zeros(length(k_list), length(mE_list));
     
     % true if running a range, false if a single value -- avoids error
-    heat_map_flag = true;
+    heat_map_flag = false;
 
     debug = true;
 
@@ -137,8 +137,8 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
 
     %% Perform Dynamic simulation  
     num_stop = -1;
-    dt = 0.0001;
-    tf = 4;
+    dt = 0.01;
+    tf = 50;
     num_steps = floor(tf/dt);
     tspan = linspace(0, tf, num_steps); 
     z0 = [th1; th2; dth1; dth2];
@@ -265,7 +265,7 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
             pause(.0000000000000000000000000001)
         end
 
-        save("data");
+        %save("data");
 
     end
 end
