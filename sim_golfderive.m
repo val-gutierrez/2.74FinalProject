@@ -28,7 +28,7 @@ function sim_golfderive()
     %%% NEW CODE AS OF 11/30/23 ----------------------
 
     % Screen record pause
-    % pause(10);
+    pause(15);
     % Resonably can do 0 - 1.5
     k_list = 1000;
     % Resonably can do 0 - .1
