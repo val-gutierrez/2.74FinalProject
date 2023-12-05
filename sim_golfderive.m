@@ -1,40 +1,21 @@
+
 function sim_golfderive()
     %% Notes to future manny
-    % The simulation seems to be working well stopping when it should I
-    % however question if maybe there are values that produce the same
-    % momentum result but we should differentiate against. Lets say a
-    % simulation has the same value when it runs the motor full time and
-    % when it runs the motor less time. We should prefer the one that runs
-    % it less. kinda something like that. I think I intuitevly was assuming
-    % the best answer should follow our hypothesis but maybe we need to
-    % change some constraints or something you know.
-  
-    % I also think it would be helpful to show a torque curve along with
-    % all our other graphs to show the torque curve is working correctly
-    % and see if it might be affecting energy weirdly. Cause right now it's
-    % just always choosing to swing the motor for the longest duration. And
-    % I am not seeing any large noticable differences with swing and time
-    % of swing you know. Maybe a graph with tau1_t as one of the axis would
-    % be helpful in seeing if it changes at all between runs.
-    %% Update on above.
-    % It actually is choseing smaller tau_t for larger masses but would
-    % still be helpful to get a graph of the torque curve working just to
-    % confrim.
+    % Still fix choosing smaller tau if possible just in case of oscilation
 
-    % Lastly need to also make a heat map. Sample code is below for that
+    % Can also make a heat map. Sample code is below for that
     % but haven't run it.
-
 
     %%% NEW CODE AS OF 11/30/23 ----------------------
 
     % Screen record pause
-    pause(15);
+    %pause(15);
     % Resonably can do 0 - 1.5
-    k_list = 0;
+    k_list = 0:.001:1;
     % Resonably can do 0 - .1
-    mE_list = 1; %0:.001:.05;
+    mE_list = .05; %0:.001:.05;
     % Resonably can do 0 - .2
-    tau1_t_list = 5;
+    tau1_t_list = .2:-.001:.001;
 
     max_val = 0;
     opt_k = 0;
@@ -44,7 +25,7 @@ function sim_golfderive()
     heat_map_values = zeros(length(k_list), length(mE_list));
     
     % true if running a range, false if a single value -- avoids error
-    heat_map_flag = false;
+    heat_map_flag = true;
 
     debug = true;
 
@@ -110,7 +91,7 @@ function sim_golfderive()
         % zlabel('Vel');
         % title('3D Surface Plot of Impact Velocity');
 
-        plot(mE_list, heat_map_values);
+        plot(k_list, heat_map_values);
         xlabel('mass'); ylabel('momentum constant k = .07');
 
         % 2 Heatmap Plot
@@ -157,7 +138,7 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
     %% Perform Dynamic simulation  
     num_stop = -1;
     dt = 0.0001;
-    tf = 5;
+    tf = 2;
     num_steps = floor(tf/dt);
     tspan = linspace(0, tf, num_steps); 
     z0 = [th1; th2; dth1; dth2];
@@ -193,11 +174,11 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
         end
     end
     
-    % if (num_stop == -1)
-    %     % Discard data for that run
-    %     drB = -1;
-    %     n = num_steps;
-    % else
+    if (num_stop == -1)
+        % Discard data for that run
+        drB = -1;
+        n = num_steps;
+    else
         %% Collect data
         final_state = z_out(:,num_steps);
         
@@ -206,10 +187,10 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
 
         %% ADDED THIS TO SHOW TA RESULTS OF SINGLE RUN NO CONSTRAINTS
 
-        num_stop = num_steps;
+        %num_stop = num_steps;
 
         n = num_stop;
-    % end
+    end
     
     if (debug)
         %% Compute Energy
@@ -281,7 +262,7 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
             set(h_l2,'XData' , [rB(1) ; rC(1)] );
             set(h_l2,'YData' , [rB(2) ; rC(2)] );
     
-            pause(.0001)
+            pause(.1)
         end
 
         save("single_run_large_k");
