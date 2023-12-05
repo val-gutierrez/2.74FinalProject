@@ -30,11 +30,11 @@ function sim_golfderive()
     % Screen record pause
     pause(15);
     % Resonably can do 0 - 1.5
-    k_list = 1000;
+    k_list = 0;
     % Resonably can do 0 - .1
     mE_list = 1; %0:.001:.05;
     % Resonably can do 0 - .2
-    tau1_t_list = 1;
+    tau1_t_list = 5;
 
     max_val = 0;
     opt_k = 0;
@@ -193,11 +193,11 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
         end
     end
     
-    if (num_stop == -1)
-        % Discard data for that run
-        drB = -1;
-        n = num_steps;
-    else
+    % if (num_stop == -1)
+    %     % Discard data for that run
+    %     drB = -1;
+    %     n = num_steps;
+    % else
         %% Collect data
         final_state = z_out(:,num_steps);
         
@@ -206,10 +206,10 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
 
         %% ADDED THIS TO SHOW TA RESULTS OF SINGLE RUN NO CONSTRAINTS
 
-        %num_stop = num_steps;
+        num_stop = num_steps;
 
         n = num_stop;
-    end
+    % end
     
     if (debug)
         %% Compute Energy
