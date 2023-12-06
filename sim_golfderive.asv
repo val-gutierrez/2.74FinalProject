@@ -11,7 +11,7 @@ function sim_golfderive()
     % Screen record pause
     %pause(15);
     % Resonably can do 0 - 1.5
-    k_list = .01;
+    k_list = .1;
     % Resonably can do 0 - .1
     mE_list = .050;%0:.001:.050;
     % Initialize an empty array
@@ -39,7 +39,7 @@ function sim_golfderive()
     % mE_list = mE_list(1:37);
 
     % Resonably can do 0 - .2
-    tau1_t_list = .%.02:-.0001:.011;
+    tau1_t_list = .05;%.005:-.0001:.0021;
 
     max_val = 0;
     opt_k = 0;
@@ -132,7 +132,7 @@ function sim_golfderive()
         % ylabel('mE');
         % title('Heatmap of Velocity');
 
-        %save("heat_map_values.mat");
+        save("heat_map_values.mat");
     end
 
     % 3 print best values
@@ -290,7 +290,7 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
             set(h_l2,'XData' , [rB(1) ; rC(1)] );
             set(h_l2,'YData' , [rB(2) ; rC(2)] );
     
-            pause(.00001)
+            pause(.01)
         end
 
         %save("data");

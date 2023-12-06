@@ -11,7 +11,7 @@ function sim_golfderive()
     % Screen record pause
     %pause(15);
     % Resonably can do 0 - 1.5
-    k_list = .01;
+    k_list = .1;
     % Resonably can do 0 - .1
     mE_list = 0:.001:.050;
     % Initialize an empty array
@@ -39,7 +39,7 @@ function sim_golfderive()
     % mE_list = mE_list(1:37);
 
     % Resonably can do 0 - .2
-    tau1_t_list = .005:-.0001:.003;
+    tau1_t_list = .065:-.0002:.03;
 
     max_val = 0;
     opt_k = 0;
@@ -158,7 +158,7 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
     l2 = 0.0635; %m
     c1 = .025; %m
     c2 = 0.034; %m
-    g = 0; %m2/s
+    g = -9.82; %m2/s
     I1 = (1/3)*m1*l1^2; %kgm2
     I2 = (1/3)*m2*l2^2; %kgm2
     %k = .07; %Nm
@@ -209,13 +209,13 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
     else
         %% Collect data
         % For single run this needs to be changed to num_steps
-        final_state = z_out(:,num_steps);
+        final_state = z_out(:,num_stop);
         
         % if final velocity is greater than last recorded update
         drB = drB_golf(final_state, p);
 
         %% ADDED THIS TO SHOW TA RESULTS OF SINGLE RUN NO CONSTRAINTS
-        % num_stop = num_steps;
+        %num_stop = num_steps;
 
         n = num_stop;
     end
@@ -290,7 +290,7 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
             set(h_l2,'XData' , [rB(1) ; rC(1)] );
             set(h_l2,'YData' , [rB(2) ; rC(2)] );
     
-            pause(.00001)
+            pause(.01)
         end
 
         %save("data");
