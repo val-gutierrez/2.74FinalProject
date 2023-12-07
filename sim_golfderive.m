@@ -9,11 +9,11 @@ function sim_golfderive()
     %%% NEW CODE AS OF 11/30/23 ----------------------
 
     % Screen record pause
-    %pause(15);
+    pause(20);
     % Resonably can do 0 - 1.5
-    k_list = .1;
+    k_list = .07;
     % Resonably can do 0 - .1
-    mE_list = 0:.001:.050;
+    mE_list = 1;
     % Initialize an empty array
     % mE_list = [];
     % 
@@ -39,7 +39,7 @@ function sim_golfderive()
     % mE_list = mE_list(1:37);
 
     % Resonably can do 0 - .2
-    tau1_t_list = .065:-.0002:.03;
+    tau1_t_list = .18;
 
     max_val = 0;
     opt_k = 0;
@@ -49,9 +49,9 @@ function sim_golfderive()
     heat_map_values = zeros(length(k_list), length(mE_list));
     
     % true if running a range, false if a single value -- avoids error
-    heat_map_flag = true;
+    heat_map_flag = false;
 
-    debug = false;
+    debug = true;
 
     for k = k_list
         disp("K = " + k);
@@ -132,7 +132,7 @@ function sim_golfderive()
         % ylabel('mE');
         % title('Heatmap of Velocity');
 
-        save("heat_map_values.mat");
+        % save("heat_map_values.mat");
     end
 
     % 3 print best values
@@ -168,7 +168,7 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
     %% Perform Dynamic simulation  
     num_stop = -1;
     dt = 0.00001;
-    tf = .5;
+    tf = .18;
     num_steps = floor(tf/dt);
     tspan = linspace(0, tf, num_steps); 
     z0 = [th1; th2; dth1; dth2];
@@ -198,27 +198,27 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
         if (abs(rC_end_x) < .005) && (abs(theta1) < thresh)
             t_stop = tspan(i);
             num_stop = floor(t_stop/dt);
-            break
+            %break
         end
     end
     
-    if (num_stop == -1)
-        % Discard data for that run
-        drB = -1;
-        n = num_steps;
-    else
+    % if (num_stop == -1)
+    %     % Discard data for that run
+    %     drB = -1;
+    %     n = num_steps;
+    % else
         %% Collect data
         % For single run this needs to be changed to num_steps
-        final_state = z_out(:,num_stop);
+        final_state = z_out(:,num_steps);
         
         % if final velocity is greater than last recorded update
         drB = drB_golf(final_state, p);
 
         %% ADDED THIS TO SHOW TA RESULTS OF SINGLE RUN NO CONSTRAINTS
-        %num_stop = num_steps;
+        num_stop = num_steps;
 
         n = num_stop;
-    end
+    % end
     
     if (debug)
         %% Compute Energy
@@ -239,6 +239,11 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
     
         dth1 = z_out(3, 1:num_stop);
         dth2 = z_out(4, 1:num_stop);
+        drB_values = zeros(1, num_stop);
+        for i = 1:num_stop
+            drB_i = drB_golf(z_out(:, i), p);
+            drB_values(i) = drB_i(1);
+        end
     
         figure(4); clf
         plot(tspan(1:num_stop), dth1);
@@ -246,6 +251,9 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
         figure(5); clf
         plot(tspan(1:num_stop), dth2);
         xlabel("Time (s)"); ylabel("dth2 (Rad/S)");
+        figure(10); clf
+        plot(tspan(1:num_stop), drB_values);
+        xlabel("Time (s)"); ylabel("Velocity");
 
         %% Plot Torques
 
@@ -290,7 +298,7 @@ function drB = sim_golfderive_k(k, mE, tau1_t, debug)
             set(h_l2,'XData' , [rB(1) ; rC(1)] );
             set(h_l2,'YData' , [rB(2) ; rC(2)] );
     
-            pause(.01)
+            pause(.001)
         end
 
         %save("data");
